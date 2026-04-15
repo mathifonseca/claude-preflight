@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    name: Validate skill structure
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check required files exist
+        run: |
+          set -e
+          test -f SKILL.md || { echo "SKILL.md missing"; exit 1; }
+          test -f README.md || { echo "README.md missing"; exit 1; }
+          test -f LICENSE || { echo "LICENSE missing"; exit 1; }
+          test -f CONTRIBUTING.md || { echo "CONTRIBUTING.md missing"; exit 1; }
+          test -f CODE_OF_CONDUCT.md || { echo "CODE_OF_CONDUCT.md missing"; exit 1; }
+          test -f references/schema.yaml || { echo "references/schema.yaml missing"; exit 1; }
+          echo "All required files present"
+
+      - name: Validate SKILL.md frontmatter
+        run: |
+          set -e
+          head -n 1 SKILL.md | grep -q '^---$' || { echo "SKILL.md must start with '---' frontmatter delimiter"; exit 1; }
+          grep -q '^name: ' SKILL.md || { echo "SKILL.md missing 'name:' field"; exit 1; }
+          grep -q '^description: ' SKILL.md || { echo "SKILL.md missing 'description:' field"; exit 1; }
+          echo "SKILL.md frontmatter valid"
+
+      - name: Validate schema.yaml is parseable
+        run: python3 -c "import yaml; yaml.safe_load(open('references/schema.yaml'))"

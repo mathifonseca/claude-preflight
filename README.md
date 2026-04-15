@@ -1,6 +1,45 @@
 # /preflight
 
+[![CI](https://github.com/mathifonseca/claude-preflight/actions/workflows/ci.yml/badge.svg)](https://github.com/mathifonseca/claude-preflight/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Claude Code](https://img.shields.io/badge/Claude%20Code-skill-orange)](https://claude.com/claude-code)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+
 Pre-ship checklist skill for [Claude Code](https://claude.com/claude-code). Validates your branch against a configurable set of checks before you open a PR — and offers to auto-fix what it can.
+
+## How it works
+
+```mermaid
+flowchart TD
+    A([<code>/preflight</code>]) --> B[Load<br/><code>.claude/preflight.yaml</code>]
+    B --> C[Gather git state<br/>diff vs <code>main</code>]
+    C --> D[Run enabled sections<br/>in parallel]
+    D --> D1[VCS]
+    D --> D2[Issues]
+    D --> D3[Testing]
+    D --> D4[Quality]
+    D --> D5[Deps / DB / Env]
+    D --> D6[Docs / API / PR / FE]
+    D1 & D2 & D3 & D4 & D5 & D6 --> E[Report<br/>PASS · WARN · FAIL]
+    E --> F{Any<br/>failures?}
+    F -->|No| G{<code>--ship</code>?}
+    G -->|Yes| H[Push branch<br/>open PR]
+    G -->|No| I([Done])
+    F -->|Yes| J[Classify each issue<br/>Auto-fix · Assist · Manual]
+    J --> K[Present action plan]
+    K --> L{User<br/>confirms?}
+    L -->|Yes| M[Execute fixes]
+    M --> E
+    L -->|No| I
+
+    style A fill:#e1f5ff,stroke:#0288d1
+    style F fill:#fff3e0,stroke:#f57c00
+    style G fill:#fff3e0,stroke:#f57c00
+    style L fill:#fff3e0,stroke:#f57c00
+    style H fill:#e8f5e9,stroke:#388e3c
+    style I fill:#e8f5e9,stroke:#388e3c
+    style M fill:#fce4ec,stroke:#c2185b
+```
 
 ## What it checks
 
