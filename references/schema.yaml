@@ -1,0 +1,106 @@
+# Preflight Configuration Schema
+# Place this file at .claude/preflight.yaml in your project root.
+# All sections are optional — only enabled sections are checked.
+
+# ─── Version Control ───────────────────────────────────────────
+vcs:
+  branch_pattern: "^feature/"          # Regex for valid branch names
+  # commit_message_pattern: "^PROJ-"   # Regex for commit message format
+  # pr_title_pattern: "^PROJ-[0-9]+:"  # Regex for PR title format
+  # pr_body_required_patterns:         # Strings that must appear in PR body
+  #   - "Closes PROJ-"
+  protected_branches:                   # Branches you should never be on
+    - main
+    - master
+
+# ─── Issue Tracking ────────────────────────────────────────────
+# issues:
+#   tracker: linear                    # linear | jira | github
+#   project_key: "PROJ"               # Key prefix for issue references
+#   require_linked_issue: true         # Warn if no issue key in branch/commits
+#   search_planning_files: true        # Search .planning/ for ticket references
+#   search_commits: true               # Search commit messages for ticket keys
+#   allow_create: false                # If false (default), never create new tickets — only link existing ones
+
+# ─── Testing ───────────────────────────────────────────────────
+testing:
+  command: "npm test"                   # Command to run full test suite
+  # quick_command: "npm test -- --bail" # Optional faster check
+  coverage:
+    command: "npm run coverage"         # Command that outputs coverage %
+    min_threshold: 80                   # Minimum coverage percentage
+    enforce_non_decrease: true          # Coverage must not drop vs main
+  require_new_tests: true              # Warn if source changed but no tests
+
+# ─── Code Quality ──────────────────────────────────────────────
+quality:
+  lint_command: "npm run lint"
+  # typecheck_command: "npx tsc --noEmit"
+  forbidden_patterns:
+    - pattern: "console\\.log"
+      message: "Remove debug console.log statements"
+      severity: warn                    # warn | error (default: error)
+    - pattern: "debugger"
+      message: "Remove debugger statements"
+    - pattern: "TODO|FIXME"
+      message: "Resolve or create ticket for TODO/FIXME"
+      severity: warn
+  no_secrets: true                     # Scan diff for leaked secrets
+
+# ─── Dependencies ──────────────────────────────────────────────
+dependencies:
+  lockfile_check: true
+  lockfiles:
+    - package-lock.json
+  # license_allowlist:                 # Optional — warn on new deps to verify
+  #   - MIT
+  #   - Apache-2.0
+  #   - BSD-2-Clause
+  #   - BSD-3-Clause
+  #   - ISC
+
+# ─── Database ──────────────────────────────────────────────────
+# database:
+#   migration_check: true
+#   model_paths:                       # Globs for ORM model files
+#     - "src/**/models/**"
+#     - "src/**/models.py"
+#   migration_path: "migrations/"      # Where migration files live
+#   reversible_check: true             # Warn if migration has no downgrade
+
+# ─── Environment ───────────────────────────────────────────────
+# environment:
+#   env_example_file: ".env.example"
+#   check_new_env_vars: true           # Warn if new env vars not documented
+#   no_hardcoded_env: true             # Flag hardcoded URLs, IPs, etc.
+
+# ─── Documentation ─────────────────────────────────────────────
+# documentation:
+#   require_updates: true
+#   files:
+#     - path: "README.md"
+#       when: "**"                     # Glob — which changed files trigger this
+#     - path: "docs/api.md"
+#       when: "src/api/**"
+#   site_config: "mkdocs.yml"         # Warn if new doc pages missing from nav
+
+# ─── API Collection ────────────────────────────────────────────
+# api_collection:
+#   tool: bruno                        # bruno | postman
+#   path: "bruno/"
+#   trigger_paths:
+#     - "src/api/**"
+
+# ─── PR Hygiene ────────────────────────────────────────────────
+pr_hygiene:
+  max_files_changed: 50               # Warn if diff is too large
+  require_description: true
+  # no_unrelated_changes: true         # Flag scattered changes
+
+# ─── Frontend ──────────────────────────────────────────────────
+# frontend:
+#   enabled: true
+#   bundle_size_check: false
+#   accessibility:
+#     check_alt_text: true
+#     check_keyboard_nav: true
