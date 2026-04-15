@@ -10,35 +10,11 @@ Pre-ship checklist skill for [Claude Code](https://claude.com/claude-code). Vali
 ## How it works
 
 ```mermaid
-flowchart TD
-    A([<code>/preflight</code>]) --> B[Load<br/><code>.claude/preflight.yaml</code>]
-    B --> C[Gather git state<br/>diff vs <code>main</code>]
-    C --> D[Run enabled sections<br/>in parallel]
-    D --> D1[VCS]
-    D --> D2[Issues]
-    D --> D3[Testing]
-    D --> D4[Quality]
-    D --> D5[Deps / DB / Env]
-    D --> D6[Docs / API / PR / FE]
-    D1 & D2 & D3 & D4 & D5 & D6 --> E[Report<br/>PASS · WARN · FAIL]
-    E --> F{Any<br/>failures?}
-    F -->|No| G{<code>--ship</code>?}
-    G -->|Yes| H[Push branch<br/>open PR]
-    G -->|No| I([Done])
-    F -->|Yes| J[Classify each issue<br/>Auto-fix · Assist · Manual]
-    J --> K[Present action plan]
-    K --> L{User<br/>confirms?}
-    L -->|Yes| M[Execute fixes]
-    M --> E
-    L -->|No| I
-
-    style A fill:#e1f5ff,stroke:#0288d1
-    style F fill:#fff3e0,stroke:#f57c00
-    style G fill:#fff3e0,stroke:#f57c00
-    style L fill:#fff3e0,stroke:#f57c00
-    style H fill:#e8f5e9,stroke:#388e3c
-    style I fill:#e8f5e9,stroke:#388e3c
-    style M fill:#fce4ec,stroke:#c2185b
+flowchart LR
+    A([/preflight]) --> B[Run checks]
+    B --> C{All pass?}
+    C -->|No| D[Propose fixes] --> E[Execute] --> B
+    C -->|Yes| F([Ship])
 ```
 
 ## What it checks
