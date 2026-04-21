@@ -104,3 +104,33 @@ pr_hygiene:
 #   accessibility:
 #     check_alt_text: true
 #     check_keyboard_nav: true
+
+# ─── Retrospective ─────────────────────────────────────────────
+# Opt-in reflection activity — when this branch ships a milestone,
+# drafts a structured retrospective entry and appends it to the project's
+# retrospective file. Runs only when a trigger fires or --section=retrospective
+# is passed explicitly. Not a PASS/FAIL check.
+#
+# retrospective:
+#   enabled: true
+#   file: ".planning/RETROSPECTIVE.md"      # Where to append entries
+#   triggers:                                # Any one match fires the section
+#     - path_changed: "**/ROADMAP.md"       # Milestone status changes here
+#     - path_changed: "**/STATE.md"         # Milestone completion signal
+#     - commit_message: "^chore: archive.*milestone"
+#     - commit_message: "^(ship|complete|close).*milestone"
+#     - branch_name: "^(milestone|release)/"
+#   scan_paths:                              # Artifacts to read for evidence
+#     - ".planning/milestones/**/*-SUMMARY.md"
+#     - ".planning/milestones/**/*VERIFICATION.md"
+#     - ".planning/milestones/**/*AUDIT*.md"
+#     - ".planning/PROJECT.md"
+#     - ".planning/STATE.md"
+#   sections:                                # Template for the entry
+#     - trigger                              # What kicked off this milestone
+#     - what_was_built                       # Concrete deliverables + counts
+#     - what_worked                          # Patterns to reinforce
+#     - what_was_inefficient                 # Friction + stale artifacts
+#     - patterns_established                 # New idioms / conventions
+#     - key_lessons                          # Distilled takeaways
+#     - cost_observations                    # Time, throughput, model mix

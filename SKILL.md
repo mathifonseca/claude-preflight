@@ -14,7 +14,7 @@ Run a configurable pre-ship checklist against the current branch, comparing it t
 Parse `$ARGUMENTS` for:
 - `--fix` flag: attempt to auto-fix issues where possible (run formatters, add missing lockfile entries, etc.)
 - `--ship` flag: after all checks pass, push branch and create PR (full ship flow). If GSD planning artifacts exist (`.planning/`), auto-generate a rich PR body from ROADMAP.md, SUMMARY.md, VERIFICATION.md, and STATE.md.
-- `--section=X,Y`: run only specific sections (comma-separated). Valid sections: `vcs`, `issues`, `testing`, `quality`, `dependencies`, `database`, `environment`, `documentation`, `api_collection`, `pr_hygiene`, `frontend`
+- `--section=X,Y`: run only specific sections (comma-separated). Valid sections: `vcs`, `issues`, `testing`, `quality`, `dependencies`, `database`, `environment`, `documentation`, `api_collection`, `pr_hygiene`, `frontend`, `retrospective`
 - If no arguments, run all enabled sections
 
 ## Step 1: Load Configuration
@@ -180,6 +180,55 @@ Only run if `frontend.enabled` is true AND frontend files are in the diff.
   - If `check_alt_text`: scan added JSX/HTML for `<img` tags without `alt` attributes — WARN
   - If `check_keyboard_nav`: scan for new interactive elements (onClick on non-button/anchor) without keyboard handlers — WARN
 
+### Section: retrospective
+
+**Purpose:** When this branch ships a meaningful unit of work (a milestone, a release, a major feature), generate a structured retrospective entry and append it to the project's retrospective file. This is not a PASS/FAIL check — it's a **prompted reflection activity** that runs only when a trigger fires.
+
+Only run if `retrospective.enabled` is true. Otherwise SKIP.
+
+**Step 1: Detect whether a retrospective should run.**
+
+Check each trigger in `retrospective.triggers` against the branch context:
+- `path_changed: "<glob>"` — match if any file in the diff matches the glob (e.g., `**/ROADMAP.md`, `**/MILESTONE*.md`, `.planning/STATE.md`)
+- `commit_message: "<regex>"` — match if any commit message on the branch matches the regex (e.g., `^(ship|complete|close).*milestone`, `^chore: archive .*milestone`)
+- `branch_name: "<regex>"` — match if the current branch name matches the regex
+
+If the user passed `--section=retrospective` explicitly, skip trigger detection and always run.
+
+If no trigger matches and no explicit flag, SKIP silently (do not clutter the report).
+
+**Step 2: Gather inputs.**
+
+- Read the existing `retrospective.file` (e.g., `.planning/RETROSPECTIVE.md`) to match tone, section structure, and cross-milestone tables
+- Glob each pattern in `retrospective.scan_paths` and read matching artifacts (SUMMARY files, VERIFICATION files, AUDIT reports, etc.)
+- Gather git context for the shipping unit: commits since the last retrospective entry, files changed, tests added/modified
+- Read any configured project-state file (e.g., `.planning/STATE.md`, `.planning/PROJECT.md`) to identify the milestone name/scope
+
+**Step 3: Draft the retrospective entry.**
+
+Follow the section template in `retrospective.sections` (default: `trigger`, `what_was_built`, `what_worked`, `what_was_inefficient`, `patterns_established`, `key_lessons`, `cost_observations`). For each section, be concrete and evidence-backed — reference specific files, plans, commits, or artifacts. **Do not invent lessons.** If an artifact doesn't reveal a lesson for a section, either leave it short or skip it.
+
+Match the tone and formatting of prior entries in the retrospective file so new entries feel continuous.
+
+If a cross-milestone summary table exists in the file (e.g., comparing metrics across releases), update it to include the new unit.
+
+**Step 4: Present the draft.**
+
+Show the full draft entry to the user and ask (via `AskUserQuestion`):
+- Approve and append as-is
+- Approve with edits (let user specify changes)
+- Skip (don't write anything)
+
+**Step 5: On approval, append.**
+
+Insert the draft into `retrospective.file` at the location that matches the file's existing pattern (typically after a `---` separator between milestone sections, before any cross-milestone trends block). If the file has no prior structure, create one mirroring the draft's section headings.
+
+Do not commit the change — leave it staged/unstaged per the project's git conventions so the user can review before committing. If `--ship` is active, the retrospective entry should be committed BEFORE Step 7 runs so it's part of the shipping PR.
+
+**Recurring-themes awareness:**
+
+If prior entries exist, scan them for patterns that repeat (e.g., "stale verification artifact" appearing in multiple milestones). If a theme from a previous entry recurs in the current one, explicitly flag it in the "What Was Inefficient" section as a recurring signal. This is what makes a retrospective valuable over time — it surfaces patterns the project hasn't yet solved.
+
 ## Step 4: Generate Report
 
 Output a clean, scannable report grouped by section:
@@ -305,6 +354,8 @@ Remaining manual items:
 
 If all checks pass (either initially or after fixes):
 
+**If the retrospective section ran and produced a draft that was approved + appended,** mention it in the all-clear message — retrospective entries belong in the same PR as the milestone close.
+
 **If `--ship` flag was passed:** Proceed directly to Step 7 (Ship Flow) without asking.
 
 **Otherwise:** Proactively suggest the logical next step:
@@ -312,6 +363,7 @@ If all checks pass (either initially or after fixes):
 ```
 All preflight checks passed! Ready to ship.
 
+[If retrospective ran:] Retrospective entry drafted and appended to <retrospective.file> — review the diff before committing.
 Next: shall I create the PR?
 ```
 
